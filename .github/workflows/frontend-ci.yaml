@@ -81,5 +81,5 @@ jobs:
             - name: Install dependencies
               run: npm install
 
-            - name: Build project
+            - name: Build project to check for build errors
               run: npm run build
