@@ -17,19 +17,21 @@ jobs:
               uses: actions/checkout@v3
             - name: Set up Python
               uses: actions/setup-python@v4
+              with:
+                python-version: '3.10'
            
             # Perform a cache action to restore cache before dependency install
             - name: Restore dependency cache
               uses: actions/cache@v4
               with:
                 path: starter/backend/.cache
-                key: ${{ runner.os }}-python-${{ hashFiles('starter/backend/requirements.txt') }}
+                key: ${{ runner.os }}-python-${{ hashFiles('starter/backend/Pipfile.lock') }}
             
             - name: install pipenv
-              run: pip install pipenv
+              run: python -m pip install --upgrade pip pipenv
             
             - name: Install dependencies
-              run: pipenv install 
+              run: pipenv --python 3.10 install
 
             - name: Run lint
               run: pipenv run lint
@@ -44,16 +46,19 @@ jobs:
               uses: actions/checkout@v3
             - name: Set up Python
               uses: actions/setup-python@v4
+              with:
+                python-version: '3.10'
 
             - name: Restore dependency cache
               uses: actions/cache@v4
               with:
                 path: starter/backend/.cache
-                key: ${{ runner.os }}-python-${{ hashFiles('starter/backend/requirements.txt') }}   
+                key: ${{ runner.os }}-python-${{ hashFiles('starter/backend/Pipfile.lock') }}
             - name: install pipenv
-              run: pip install pipenv
+              run: python -m pip install --upgrade pip pipenv
+            
             - name: Install dependencies
-              run: pipenv install
+              run: pipenv --python 3.10 install
             - name: Run tests
               run: pipenv run test
 
@@ -81,3 +86,7 @@ jobs:
             - name: Review logs on failure
               if: failure()
               run: docker logs mp-backend
+
+            - name: Stop and remove Docker container
+              if: always()
+              run: docker rm -f mp-backend || true
