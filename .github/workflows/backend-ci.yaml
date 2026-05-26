@@ -24,6 +24,10 @@ jobs:
               with:
                 path: starter/backend/.cache
                 key: ${{ runner.os }}-python-${{ hashFiles('starter/backend/requirements.txt') }}
+            
+            - name: install pipenv
+              run: pip install pipenv
+            
             - name: Install dependencies
               run: pipenv install 
 
@@ -46,7 +50,8 @@ jobs:
               with:
                 path: starter/backend/.cache
                 key: ${{ runner.os }}-python-${{ hashFiles('starter/backend/requirements.txt') }}   
-
+            - name: install pipenv
+              run: pip install pipenv
             - name: Install dependencies
               run: pipenv install
             - name: Run tests
