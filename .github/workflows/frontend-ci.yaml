@@ -23,6 +23,10 @@ jobs:
             # Perform a cache action to restore cache before dependency install
             - name: Restore dependency cache
               uses: actions/cache@v4
+              with:
+                path: starter/frontend/node_modules
+                key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
+
 
             - name: Install dependencies
               run: npm install
@@ -41,6 +45,9 @@ jobs:
 
             - name: Restore dependency cache
               uses: actions/cache@v4
+              with:
+                path: starter/frontend/node_modules
+                key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
 
             - name: Install dependencies
               run: npm install
@@ -61,6 +68,9 @@ jobs:
 
             - name: Restore dependency cache
               uses: actions/cache@v4
+              with:
+                path: starter/frontend/node_modules
+                key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
 
             - name: Install dependencies
               run: npm install
