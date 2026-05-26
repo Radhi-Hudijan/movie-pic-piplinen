@@ -1,4 +1,5 @@
-name: frontend-ci
+name: Frontend Continuous Integration
+
 
 on:
     workflow_dispatch:
