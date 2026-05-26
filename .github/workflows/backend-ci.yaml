@@ -1,0 +1,77 @@
+name: Backend Continuous Integration
+
+on:
+    workflow_dispatch:
+    pull_request:
+        branches: [main]
+        paths:
+            - 'starter/backend/**'
+jobs:
+    backend-lint-job: 
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: starter/backend
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+            - name: Set up Python
+              uses: actions/setup-python@v4
+           
+            # Perform a cache action to restore cache before dependency install
+            - name: Restore dependency cache
+              uses: actions/cache@v4
+              with:
+                path: starter/backend/.cache
+                key: ${{ runner.os }}-python-${{ hashFiles('starter/backend/requirements.txt') }}
+            - name: Install dependencies
+              run: pipenv install 
+
+            - name: Run lint
+              run: pipenv run lint
+
+    backend-test-job:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: starter/backend
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+            - name: Set up Python
+              uses: actions/setup-python@v4
+
+            - name: Restore dependency cache
+              uses: actions/cache@v4
+              with:
+                path: starter/backend/.cache
+                key: ${{ runner.os }}-python-${{ hashFiles('starter/backend/requirements.txt') }}   
+
+            - name: Install dependencies
+              run: pipenv install
+            - name: Run tests
+              run: pipenv run test
+
+    backend-docker-build-job:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: starter/backend
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Build Docker image
+              run: docker build --tag mp-backend:latest .
+
+            - name: Run Docker container
+              run: docker run -d -p 5000:5000 --name mp-backend mp-backend:latest
+
+            - name: Verify application is running
+              run: |
+                sleep 10
+                curl http://localhost:5000/movies
+
+            - name: Review logs on failure
+              if: failure()
+              run: docker logs mp-backend
