@@ -1,0 +1,68 @@
+name: frontend-ci
+
+on:
+    pull_request:
+        branches: [main]
+        paths:
+            - 'starter/frontend/**'
+
+    workflow_dispatch:
+
+jobs:
+    lint-job:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3 
+
+            # Perform a cache action to restore cache before dependency install
+            - name: Restore dependency cache
+              uses: actions/cache@v4
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Run lint
+              run: npm run lint
+    test-job:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+
+            - name: Restore dependency cache
+              uses: actions/cache@v4
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Run tests
+              run: npm run test
+
+    build-job:
+        runs-on: ubuntu-latest
+        needs: [lint-job, test-job]
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+
+            - name: Restore dependency cache
+              uses: actions/cache@v4
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Build project
+              run: npm run build
