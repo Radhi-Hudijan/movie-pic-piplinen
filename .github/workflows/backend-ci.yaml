@@ -1,92 +1,106 @@
 name: Backend Continuous Integration
 
 on:
-    workflow_dispatch:
-    pull_request:
-        branches: [main]
-        paths:
-            - 'starter/backend/**'
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'starter/backend/**'
+
 jobs:
-    backend-lint-job: 
-        runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory: starter/backend
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v3
-            - name: Set up Python
-              uses: actions/setup-python@v4
-              with:
-                python-version: '3.10'
-           
-            # Perform a cache action to restore cache before dependency install
-            - name: Restore dependency cache
-              uses: actions/cache@v4
-              with:
-                path: starter/backend/.cache
-                key: ${{ runner.os }}-python-${{ hashFiles('starter/backend/Pipfile.lock') }}
-            
-            - name: install pipenv
-              run: python -m pip install --upgrade pip pipenv
-            
-            - name: Install dependencies
-              run: pipenv --python 3.10 install
+  backend-lint-job:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: starter/backend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-            - name: Run lint
-              run: pipenv run lint
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-    backend-test-job:
-        runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory: starter/backend
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v3
-            - name: Set up Python
-              uses: actions/setup-python@v4
-              with:
-                python-version: '3.10'
+      - name: Debug Python
+        run: |
+          python --version
+          which python
 
-            - name: Restore dependency cache
-              uses: actions/cache@v4
-              with:
-                path: starter/backend/.cache
-                key: ${{ runner.os }}-python-${{ hashFiles('starter/backend/Pipfile.lock') }}
-            - name: install pipenv
-              run: python -m pip install --upgrade pip pipenv
-            
-            - name: Install dependencies
-              run: pipenv --python 3.10 install
-            - name: Run tests
-              run: pipenv run test
+      - name: Restore dependency cache
+        uses: actions/cache@v4
+        with:
+          path: starter/backend/.cache
+          key: ${{ runner.os }}-python-${{ hashFiles('starter/backend/Pipfile') }}
 
-    backend-docker-build-job:
-        runs-on: ubuntu-latest
-        needs: [backend-lint-job, backend-test-job]
-        defaults:
-            run:
-                working-directory: starter/backend
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v3
+      - name: install pipenv
+        run: python -m pip install --upgrade pip pipenv
 
-            - name: Build Docker image
-              run: docker build --tag mp-backend:latest .
+      - name: Install dependencies
+        run: pipenv --python $(which python) install
 
-            - name: Run Docker container t
-              run: docker run -d -p 5000:5000 --name mp-backend mp-backend:latest
+      - name: Run lint
+        run: pipenv run lint
 
-            - name: Verify application is running
-              run: |
-                sleep 10
-                curl http://localhost:5000/movies
+  backend-test-job:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: starter/backend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-            - name: Review logs on failure
-              if: failure()
-              run: docker logs mp-backend
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-            - name: Stop and remove Docker container
-              if: always()
-              run: docker rm -f mp-backend || true
+      - name: Debug Python
+        run: |
+          python --version
+          which python
+
+      - name: Restore dependency cache
+        uses: actions/cache@v4
+        with:
+          path: starter/backend/.cache
+          key: ${{ runner.os }}-python-${{ hashFiles('starter/backend/Pipfile') }}
+
+      - name: install pipenv
+        run: python -m pip install --upgrade pip pipenv
+
+      - name: Install dependencies
+        run: pipenv --python $(which python) install
+
+      - name: Run tests
+        run: pipenv run test
+
+  backend-docker-build-job:
+    runs-on: ubuntu-latest
+    needs: [backend-lint-job, backend-test-job]
+    defaults:
+      run:
+        working-directory: starter/backend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: docker build --tag mp-backend:latest .
+
+      - name: Run Docker container
+        run: docker run -d -p 5000:5000 --name mp-backend mp-backend:latest
+
+      - name: Verify application is running
+        run: |
+          sleep 10
+          curl --fail http://localhost:5000/movies
+
+      - name: Review logs on failure
+        if: failure()
+        run: docker logs mp-backend
+
+      - name: Stop and remove Docker container
+        if: always()
+        run: docker rm -f mp-backend || true
