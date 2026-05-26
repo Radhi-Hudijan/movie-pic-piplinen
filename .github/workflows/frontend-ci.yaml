@@ -96,7 +96,7 @@ jobs:
             - name: Run Docker container
               run: docker run -d -p 3000:3000 --name mp-frontend mp-frontend:latest
 
-            - name: Verify application is running
+            - name: Verify container is running
               run: |
                 sleep 10 # Wait for the container to start
                 curl -f http://localhost:3000 || exit 1
