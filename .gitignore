@@ -9,3 +9,7 @@ credentials
 .terraform.tfstate.backup
 .terraform.tfstate.lock.info
 .DS_Store
+.terraform.lock.hcl
+terraform.tfvars
+terraform.tfstate
+terraform.tfstate.backup

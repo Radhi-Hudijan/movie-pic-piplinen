@@ -1,0 +1,102 @@
+name: frontend-cd
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'starter/frontend/**'
+
+jobs:
+  lint-job:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: starter/frontend
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3 
+
+            # Perform a cache action to restore cache before dependency install
+            - name: Restore dependency cache
+              uses: actions/cache@v4
+              with:
+                path: starter/frontend/node_modules
+                key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
+
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Run lint
+              run: npm run lint
+  test-job:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: starter/frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+
+      - name: Restore dependency cache
+        uses: actions/cache@v4
+        with:
+          path: starter/frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm run test
+  build-deploy:
+    needs: [test-job, lint-job]
+    runs-on: ubuntu-latest
+    defaults:
+        run:
+            working-directory: starter/frontend
+
+    steps:
+        - name: Checkout code
+          uses: actions/checkout@v3
+
+        - name: set up AWS credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: us-east-1
+
+        - name: Login to Amazon ECR
+          id: login-ecr
+          uses: aws-actions/amazon-ecr-login@v2
+
+        - name: Setup ECR Repository
+          uses: deploy-actions/setup-ecr@v1
+          with:
+            RepositoryName: frontend
+
+        - name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v2
+
+        - name: Build and push Docker image
+          env: 
+             REACT_APP_MOVIE_API_URL: ${{ secrets.REACT_APP_MOVIE_API_URL }}
+             REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+             REPOSITORY: frontend
+             IMAGE_TAG: ${{ github.sha }}
+          run: |
+           docker build --build-arg=REACT_APP_MOVIE_API_URL=${REACT_APP_MOVIE_API_URL} --tag=${REGISTRY}/${REPOSITORY}:${IMAGE_TAG} .
+           docker push ${REGISTRY}/${REPOSITORY}:${IMAGE_TAG}
+
+
+
+
+        
